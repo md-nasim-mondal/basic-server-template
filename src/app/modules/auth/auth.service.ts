@@ -25,16 +25,36 @@ import { sendEmail } from "../../utils/sendEmail";
 //     if (!isPasswordMatched) {
 //         throw new AppError(httpStatus.BAD_REQUEST, "Incorrect Password")
 //     }
-//     // const jwtPayload = {
-//     //     userId: isUserExist._id,
-//     //     email: isUserExist.email,
-//     //     role: isUserExist.role
-//     // }
-//     // const accessToken = generateToken(jwtPayload, envVars.JWT_ACCESS_SECRET, envVars.JWT_ACCESS_EXPIRES)
 
-//     // const refreshToken = generateToken(jwtPayload, envVars.JWT_REFRESH_SECRET, envVars.JWT_REFRESH_EXPIRES)
+// if (
+//     isUserExist.isActive === IsActive.BLOCKED ||
+//     isUserExist.isActive === IsActive.INACTIVE
+//   ) {
+//     throw new AppError(
+//       httpStatus.BAD_REQUEST,
+//       `User is ${isUserExist.isActive}`
+//     );
+//   }
+//   if (isUserExist.isDeleted) {
+//     throw new AppError(httpStatus.BAD_REQUEST, "User is deleted!");
+//   }
 
-//     const userTokens = createUserTokens(isUserExist)
+//   if (!isUserExist.isVerified) {
+//     throw new AppError(httpStatus.BAD_REQUEST, "User is not verified!!");
+//   }
+
+//   const isPasswordMatched = await bcryptjs.compare(
+//     password as string,
+//     isUserExist.password as string
+//   );
+
+//   if (!isPasswordMatched) {
+//     throw new AppError(httpStatus.BAD_REQUEST, "Incorrect Password!");
+//   }
+
+//   const userTokens = createUserTokens(isUserExist);
+
+//   setAuthCookie(res, userTokens);
 
 //     // delete isUserExist.password;
 
@@ -42,8 +62,6 @@ import { sendEmail } from "../../utils/sendEmail";
 //     const { password: pass, ...rest } = isUserExist.toObject()
 
 //     return {
-//         accessToken: userTokens.accessToken,
-//         refreshToken: userTokens.refreshToken,
 //         user: rest
 //     }
 

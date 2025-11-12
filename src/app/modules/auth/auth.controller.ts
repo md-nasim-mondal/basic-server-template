@@ -53,15 +53,12 @@ const credentialsLogin = catchAsync(
       });
     })(req, res, next);
 
-    // res.cookie("accessToken", loginInfo.accessToken, {
-    //     httpOnly: true,
-    //     secure: false
-    // })
-
-    // res.cookie("refreshToken", loginInfo.refreshToken, {
-    //     httpOnly: true,
-    //     secure: false,
-    // })
+    // sendResponse(res, {
+    //   success: true,
+    //   statusCode: httpStatus.OK,
+    //   message: "User LoggedIn Successfully",
+    //   data: loginInfo,
+    // });
   }
 );
 const getNewAccessToken = catchAsync(
