@@ -18,6 +18,7 @@ interface EnvConfig {
   GOOGLE_CALLBACK_URL: string;
   EXPRESS_SESSION_SECRET: string;
   FRONTEND_URL: string;
+  AUTH_SYSTEM: "passport" | "custom";
   SSL: {
     STORE_ID: string;
     STORE_PASS: string;
@@ -61,39 +62,14 @@ const loadEnvVariables = (): EnvConfig => {
     "SUPER_ADMIN_PASSWORD",
     "JWT_REFRESH_SECRET",
     "JWT_REFRESH_EXPIRES",
-    "GOOGLE_CLIENT_SECRET",
-    "GOOGLE_CLIENT_ID",
-    "GOOGLE_CALLBACK_URL",
+    "AUTH_SYSTEM",
     "EXPRESS_SESSION_SECRET",
     "FRONTEND_URL",
-    "SSL_STORE_ID",
-    "SSL_STORE_PASS",
-    "SSL_PAYMENT_API",
-    "SSL_VALIDATION_API",
-    "SSL_IPN_URL",
-    "SSL_SUCCESS_FRONTEND_URL",
-    "SSL_FAIL_FRONTEND_URL",
-    "SSL_CANCEL_FRONTEND_URL",
-    "SSL_SUCCESS_BACKEND_URL",
-    "SSL_FAIL_BACKEND_URL",
-    "SSL_CANCEL_BACKEND_URL",
-    "CLOUDINARY_CLOUD_NAME",
-    "CLOUDINARY_API_KEY",
-    "CLOUDINARY_API_SECRET",
-    "SMTP_HOST",
-    "SMTP_PORT",
-    "SMTP_USER",
-    "SMTP_PASS",
-    "SMTP_FORM",
-    "REDIS_HOST",
-    "REDIS_PORT",
-    "REDIS_USERNAME",
-    "REDIS_PASSWORD",
   ];
 
   requiredEnvVariables.forEach((key) => {
     if (!process.env[key]) {
-      throw new Error(`Missing require environment variable ${key}`);
+      throw new Error(`Missing required environment variable ${key}`);
     }
   });
 
@@ -113,6 +89,7 @@ const loadEnvVariables = (): EnvConfig => {
     GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL as string,
     EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET as string,
     FRONTEND_URL: process.env.FRONTEND_URL as string,
+    AUTH_SYSTEM: process.env.AUTH_SYSTEM as "passport" | "custom",
     // ssl
     SSL: {
       STORE_ID: process.env.SSL_STORE_ID as string,

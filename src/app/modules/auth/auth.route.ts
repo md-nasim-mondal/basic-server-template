@@ -1,39 +1,61 @@
 import { NextFunction, Request, Response, Router } from "express";
 import passport from "passport";
+import { envVars } from "../../config/env";
 import { checkAuth } from "../../middlewares/checkAuth";
+import validateRequest from "../../middlewares/validateRequest";
 import { Role } from "../user/user.interface";
 import { AuthControllers } from "./auth.controller";
-import { envVars } from "../../config/env";
+import { AuthValidation } from "./auth.validation";
 
 const router = Router();
 
-router.post("/login", AuthControllers.credentialsLogin);
+router.post(
+  "/login",
+  validateRequest(AuthValidation.loginValidationSchema),
+  AuthControllers.credentialsLogin
+);
+
 router.post("/refresh-token", AuthControllers.getNewAccessToken);
+
 router.post("/logout", AuthControllers.logout);
+
 router.post(
   "/change-password",
   checkAuth(...Object.values(Role)),
+  validateRequest(AuthValidation.changePasswordValidationSchema),
   AuthControllers.changePassword
 );
+
 router.post(
   "/set-password",
   checkAuth(...Object.values(Role)),
   AuthControllers.setPassword
 );
-router.post("/forgot-password", AuthControllers.forgotPassword);
+
+router.post(
+  "/forgot-password",
+  validateRequest(AuthValidation.forgotPasswordValidationSchema),
+  AuthControllers.forgotPassword
+);
+
 router.post(
   "/reset-password",
   checkAuth(...Object.values(Role)),
+  validateRequest(AuthValidation.resetPasswordValidationSchema),
   AuthControllers.resetPassword
 );
 
-// Frontend -> forget-password -> email -> user status check -> short expiration token (valid for 10 min) -> email -> Frontend Link http://localhost:5173/reset-password?email=example@gmail.com&token=token -> frontend e query theke user er email and token extract kore anbo... -> new password user theke nibe -> backend er /reset-password api -> authorization = token -> newPassword -> token verify -> hash password -> save user password
-
-//  /booking -> /login -> successful google login -> /booking frontend
-// /login -> successful google login -> / frontend
+// Google OAuth Routes
 router.get(
   "/google",
-  async (req: Request, res: Response, next: NextFunction) => {
+  (req: Request, res: Response, next: NextFunction) => {
+    if (envVars.AUTH_SYSTEM !== "passport") {
+      res.status(400).json({
+        success: false,
+        message: "Passport authentication is currently disabled.",
+      });
+      return;
+    }
     const redirect = req.query.redirect || "/";
     passport.authenticate("google", {
       scope: ["profile", "email"],
@@ -42,11 +64,10 @@ router.get(
   }
 );
 
-// api/v1/auth/google/callback?state=/booking
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    failureRedirect: `${envVars.FRONTEND_URL}/login?error=There is some issues with your account. Please contact with our support team!`,
+    failureRedirect: `${envVars.FRONTEND_URL}/login?error=auth_failed`,
   }),
   AuthControllers.googleCallbackController
 );

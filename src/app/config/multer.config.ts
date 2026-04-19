@@ -5,7 +5,7 @@ import multer from "multer";
 const storage = new CloudinaryStorage({
   cloudinary: cloudinaryUpload,
   params: {
-    public_id: (req, file) => {
+    public_id: (_req, file) => {
       // my image.png
 
       // My Special.Image#!@.png => 4545adsfsadf-45324263452-my-image.png

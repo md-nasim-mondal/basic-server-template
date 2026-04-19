@@ -10,16 +10,15 @@ interface TMeta {
 interface TResponse<T> {
   statusCode: number;
   success: boolean;
-  message: string;
-  data: T;
+  message?: string;
   meta?: TMeta;
+  data: T;
 }
 
 export const sendResponse = <T>(res: Response, data: TResponse<T>) => {
   res.status(data.statusCode).json({
-    statusCode: data.statusCode,
     success: data.success,
-    message: data.message,
+    message: data.message || "Request successful",
     meta: data.meta,
     data: data.data,
   });

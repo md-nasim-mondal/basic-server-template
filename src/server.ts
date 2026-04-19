@@ -2,77 +2,49 @@ import { Server } from "http";
 import mongoose from "mongoose";
 import app from "./app";
 import { envVars } from "./app/config/env";
-// import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
-// import { connectRedis } from "./app/config/redis.config";
 
 let server: Server;
 
 const startServer = async () => {
   try {
-    await mongoose.connect(envVars.DB_URL, {
-      dbName: "server-db",
-    });
+    await mongoose.connect(envVars.DB_URL);
 
-    console.log("Connected to DB!!");
+    console.log("✅ Connected to Database successfully!");
 
     server = app.listen(envVars.PORT, () => {
-      console.log(`Server is listening to port ${envVars.PORT}`);
+      console.log(`🚀 Server is listening at http://localhost:${envVars.PORT}`);
+      console.log(`🔑 Authentication System: ${envVars.AUTH_SYSTEM.toUpperCase()}`);
     });
   } catch (error) {
-    console.log(error);
+    console.error("❌ Failed to connect to Database:", error);
+    process.exit(1);
   }
 };
 
-(async () => {
-//   await connectRedis();
-  await startServer();
-//   await seedSuperAdmin();
-})();
+startServer();
+
+const exitHandler = () => {
+  if (server) {
+    server.close(() => {
+      console.log("Server closed");
+      process.exit(1);
+    });
+  } else {
+    process.exit(1);
+  }
+};
+
+const unexpectedErrorHandler = (error: unknown) => {
+  console.error("Unexpected error:", error);
+  exitHandler();
+};
+
+process.on("uncaughtException", unexpectedErrorHandler);
+process.on("unhandledRejection", unexpectedErrorHandler);
 
 process.on("SIGTERM", () => {
-  console.log("SIGTERM signal received... Server shutting down..");
-
+  console.log("SIGTERM received");
   if (server) {
-    server.close(() => {
-      process.exit(1);
-    });
+    server.close();
   }
-
-  process.exit(1);
-});
-
-process.on("SIGINT", () => {
-  console.log("SIGINT signal received... Server shutting down..");
-
-  if (server) {
-    server.close(() => {
-      process.exit(1);
-    });
-  }
-
-  process.exit(1);
-});
-
-process.on("unhandledRejection", (err) => {
-  console.log("Unhandled Rejection detected... Server shutting down..", err);
-
-  if (server) {
-    server.close(() => {
-      process.exit(1);
-    });
-  }
-
-  process.exit(1);
-});
-
-process.on("uncaughtException", (err) => {
-  console.log("Uncaught Exception detected... Server shutting down..", err);
-
-  if (server) {
-    server.close(() => {
-      process.exit(1);
-    });
-  }
-
-  process.exit(1);
-});
+});

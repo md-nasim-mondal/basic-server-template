@@ -6,7 +6,19 @@ import tseslint from "typescript-eslint";
 
 export default defineConfig(
   eslint.configs.recommended,
-  //   tseslint.configs.recommended,
-  tseslint.configs.strict,
-  tseslint.configs.stylistic
+  ...tseslint.configs.strict,
+  ...tseslint.configs.stylistic,
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+      "@typescript-eslint/no-explicit-any": "warn",
+    },
+  }
 );

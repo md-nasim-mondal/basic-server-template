@@ -32,10 +32,11 @@ export interface IUser {
   phone?: string;
   picture?: string;
   address?: string;
-  isDeleted?: string;
-  isActive?: IsActive;
-  isVerified?: boolean;
+  isDeleted: boolean;
+  isActive: IsActive;
+  isVerified: boolean;
   role: Role;
   auths: IAuthProvider[];
   createdAt?: Date;
+  updatedAt?: Date;
 }

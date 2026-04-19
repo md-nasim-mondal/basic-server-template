@@ -1,56 +1,74 @@
 import { NextFunction, Request, Response } from "express";
+import httpStatus from "http-status-codes";
 import { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../config/env";
 import AppError from "../errorHelpers/AppError";
-import { verifyToken } from "../utils/jwt";
+import { IsActive, IUser, Role } from "../modules/user/user.interface";
 import { User } from "../modules/user/user.model";
-import httpStatus from "http-status-codes";
-import { IsActive } from "../modules/user/user.interface";
+import { verifyToken } from "../utils/jwt";
 
 export const checkAuth =
-  (...authRoles: string[]) =>
-  async (req: Request, res: Response, next: NextFunction) => {
+  (...authRoles: Role[]) =>
+  async (req: Request, _res: Response, next: NextFunction) => {
     try {
-      const accessToken = req.headers.authorization;
+      let user: JwtPayload | undefined;
 
-      if (!accessToken) {
-        throw new AppError(403, "No Token Received");
+      if (envVars.AUTH_SYSTEM === "passport") {
+        // In Passport, req.user is populated after successful session authentication
+        if (!req.isAuthenticated() || !req.user) {
+          throw new AppError(httpStatus.UNAUTHORIZED, "You are not authenticated");
+        }
+        
+        const passportUser = req.user as IUser;
+        user = {
+          userId: passportUser._id?.toString() as string,
+          email: passportUser.email,
+          role: passportUser.role,
+        };
+      } else {
+        // Custom JWT Authentication
+        const accessToken = req.headers.authorization;
+
+        if (!accessToken) {
+          throw new AppError(httpStatus.UNAUTHORIZED, "No token provided");
+        }
+
+        user = verifyToken(
+          accessToken,
+          envVars.JWT_ACCESS_SECRET
+        ) as JwtPayload;
       }
 
-      const verifiedToken = verifyToken(
-        accessToken,
-        envVars.JWT_ACCESS_SECRET
-      ) as JwtPayload;
+      if (!user) {
+        throw new AppError(httpStatus.UNAUTHORIZED, "Invalid authentication");
+      }
 
-      const isUserExist = await User.findOne({ email: verifiedToken.email });
+      // Check if user exists and is active
+      const isUserExist = await User.findById(user.userId);
 
       if (!isUserExist) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User does not exist");
+        throw new AppError(httpStatus.NOT_FOUND, "User does not exist");
       }
-      if (
-        isUserExist.isActive === IsActive.BLOCKED ||
-        isUserExist.isActive === IsActive.INACTIVE
-      ) {
+
+      if (isUserExist.isDeleted) {
+        throw new AppError(httpStatus.FORBIDDEN, "User is deleted");
+      }
+
+      if (isUserExist.isActive !== IsActive.ACTIVE) {
         throw new AppError(
-          httpStatus.BAD_REQUEST,
-          `User is ${isUserExist.isActive}`
+          httpStatus.FORBIDDEN,
+          `User account is ${isUserExist.isActive}`
         );
       }
-      if (isUserExist.isDeleted) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User is deleted");
+
+      // Role authorization
+      if (authRoles.length > 0 && !authRoles.includes(isUserExist.role as Role)) {
+        throw new AppError(httpStatus.FORBIDDEN, "You do not have permission to access this resource");
       }
 
-      if (!isUserExist.isVerified) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User is not verified!!");
-      }
-
-      if (!authRoles.includes(verifiedToken.role)) {
-        throw new AppError(403, "You are not permitted to view this route!!!");
-      }
-      req.user = verifiedToken;
+      req.user = user;
       next();
     } catch (error) {
-      console.log("jwt error", error);
       next(error);
     }
   };

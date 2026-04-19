@@ -11,15 +11,24 @@ import { router } from "./app/routes";
 
 const app = express();
 
-app.use(
-  expressSession({
-    secret: envVars.EXPRESS_SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-  })
-);
-app.use(passport.initialize());
-app.use(passport.session());
+// Session and Passport initialization based on Auth System
+if (envVars.AUTH_SYSTEM === "passport") {
+  app.use(
+    expressSession({
+      secret: envVars.EXPRESS_SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        secure: envVars.NODE_ENV === "production",
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      },
+    })
+  );
+  app.use(passport.initialize());
+  app.use(passport.session());
+}
+
 app.use(cookieParser());
 app.use(express.json());
 app.set("trust proxy", 1);
@@ -33,14 +42,15 @@ app.use(
 
 app.use("/api/v1", router);
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (_req: Request, res: Response) => {
   res.status(200).json({
-    message: "Welcome to Parcel Delivery Management System Server!",
+    success: true,
+    message: "Welcome to the Production Ready Backend Starter Template!",
+    version: "1.0.0",
   });
 });
 
 app.use(globalErrorHandler);
-
 app.use(notFound);
 
 export default app;
