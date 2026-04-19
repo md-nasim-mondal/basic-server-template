@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import nodemailer from "nodemailer";
 import { envVars } from "../config/env";
-import path from "path";
-import ejs from "ejs";
 import AppError from "../errorHelpers/AppError";
+import { emailTemplates, TEmailTemplateName } from "./emailTemplates";
 
 const transporter = nodemailer.createTransport({
   host: envVars.EMAIL_SENDER.SMTP_HOST,
@@ -18,8 +16,8 @@ const transporter = nodemailer.createTransport({
 interface SendEmailOptions {
   to: string;
   subject: string;
-  templateName: string;
-  templateData?: Record<string, any>;
+  templateName: TEmailTemplateName;
+  templateData?: Record<string, unknown>;
   attachments?: {
     filename: string;
     content: Buffer | string;
@@ -35,8 +33,33 @@ export const sendEmail = async ({
   attachments,
 }: SendEmailOptions) => {
   try {
-    const templatePath = path.join(__dirname, `templates/${templateName}.ejs`);
-    const html = await ejs.renderFile(templatePath, templateData);
+    const templateFn = emailTemplates[templateName];
+    if (!templateFn) {
+      throw new AppError(404, `Template ${templateName} not found`);
+    }
+
+    // Call the template function with data
+    let html = "";
+    if (templateName === "forgetPassword" && templateData) {
+      html = (templateFn as (name: string, link: string) => string)(
+        templateData.name as string,
+        templateData.resetUILink as string
+      );
+    } else if (templateName === "otp" && templateData) {
+      html = (templateFn as (name: string, otp: string) => string)(
+        templateData.name as string,
+        templateData.otp as string
+      );
+    } else if (templateName === "invoice" && templateData) {
+      html = (templateFn as (name: string, amount: string, id: string) => string)(
+        templateData.name as string,
+        templateData.amount as string,
+        templateData.paymentId as string
+      );
+    } else {
+      html = (templateFn as () => string)();
+    }
+
     const info = await transporter.sendMail({
       from: envVars.EMAIL_SENDER.SMTP_FORM,
       to: to,
@@ -45,12 +68,13 @@ export const sendEmail = async ({
       attachments: attachments?.map((attachment) => ({
         filename: attachment.filename,
         content: attachment.content,
-        contentTyp: attachment.contentType,
+        contentType: attachment.contentType,
       })),
     });
     console.log(`\u2709\uFE0F Email sent to ${to}: ${info.messageId}`);
-  } catch (error: any) {
-    console.log("email sending error: ", error.message);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.log("email sending error: ", err.message);
     throw new AppError(401, "Email Error!");
   }
 };
