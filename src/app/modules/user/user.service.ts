@@ -7,6 +7,8 @@ import { IAuthProvider, IUser, Role } from "./user.interface";
 import { User } from "./user.model";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { userSearchableFields } from "./user.constant";
+import { sendEmail } from "../../utils/sendEmail";
+import { ms } from "../../utils/ms";
 
 const createUser = async (payload: Partial<IUser>) => {
   const { email, password, ...rest } = payload;
@@ -27,11 +29,26 @@ const createUser = async (payload: Partial<IUser>) => {
     providerId: email as string,
   };
 
+  const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
+  const verificationCodeExpires = new Date(Date.now() + ms(envVars.OTP_EXPIRES));
+
   const user = await User.create({
     email,
     password: hashedPassword,
     auths: [authProvider],
+    verificationCode,
+    verificationCodeExpires,
     ...rest,
+  });
+
+  await sendEmail({
+    to: user.email,
+    subject: "Verify Your Email",
+    templateName: "verifyEmail",
+    templateData: {
+      name: user.name,
+      code: verificationCode,
+    },
   });
 
   return user;
@@ -135,10 +152,41 @@ const getMe = async (userId: string) => {
   };
 };
 
+const verifyEmail = async (email: string, code: string) => {
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  if (user.isVerified) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User is already verified");
+  }
+
+  if (user.verificationCode !== code) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invalid verification code");
+  }
+
+  if (
+    user.verificationCodeExpires &&
+    new Date() > user.verificationCodeExpires
+  ) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Verification code expired");
+  }
+
+  user.isVerified = true;
+  user.verificationCode = undefined;
+  user.verificationCodeExpires = undefined;
+  await user.save();
+
+  return user;
+};
+
 export const UserServices = {
   createUser,
   getAllUsers,
   updateUser,
   getSingleUser,
   getMe,
+  verifyEmail,
 };

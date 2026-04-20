@@ -32,6 +32,10 @@ const userSchema = new Schema<IUser>(
       default: IsActive.ACTIVE,
     },
     isVerified: { type: Boolean, default: false },
+    verificationCode: { type: String },
+    verificationCodeExpires: { type: Date },
+    passwordResetCode: { type: String },
+    passwordResetCodeExpires: { type: Date },
     auths: [authProviderSchema],
   },
   {

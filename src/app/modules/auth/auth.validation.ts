@@ -24,6 +24,7 @@ const resetPasswordValidationSchema = z.object({
   body: z.object({
     id: z.string().min(1, "User ID is required"),
     newPassword: z.string().min(6, "Password must be at least 6 characters"),
+    code: z.string().length(4, "Code must be 4 digits"),
   }),
 });
 

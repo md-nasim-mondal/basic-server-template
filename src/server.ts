@@ -7,7 +7,9 @@ let server: Server;
 
 const startServer = async () => {
   try {
-    await mongoose.connect(envVars.DB_URL);
+    await mongoose.connect(envVars.DB_URL, {
+      dbName: "derival81-savings-app-db",
+    });
 
     console.log("✅ Connected to Database successfully!");
 
@@ -47,4 +49,4 @@ process.on("SIGTERM", () => {
   if (server) {
     server.close();
   }
-});
+});

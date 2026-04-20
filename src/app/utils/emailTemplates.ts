@@ -1,5 +1,5 @@
 export const emailTemplates = {
-  forgetPassword: (name: string, resetUILink: string) => `
+  forgetPassword: (name: string, resetUILink: string, code: string) => `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -30,6 +30,10 @@ export const emailTemplates = {
             <p>We received a request to reset the password associated with your account. If you made this request, please click the button below to secure your account:</p>
             <div style="text-align: center;">
               <a href="${resetUILink}" class="btn">Securely Reset Password</a>
+            </div>
+            <p>Alternatively, you can use the following 4-digit code to reset your password:</p>
+            <div style="text-align: center; font-size: 24px; font-weight: bold; color: #1a73e8; letter-spacing: 5px; margin: 20px 0;">
+              ${code}
             </div>
             <p style="margin-top: 30px; font-size: 14px; color: #888;">This link will expire in 10 minutes for your security. If you didn't request this change, you can safely ignore this email.</p>
           </div>
@@ -156,6 +160,44 @@ export const emailTemplates = {
           </tr>
         </table>
         <p style="margin-top: 40px; text-align: center; color: #888; font-size: 14px;">Thank you for your business!</p>
+      </div>
+    </body>
+    </html>
+  `,
+  verifyEmail: (name: string, code: string) => `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f7f9; }
+        .wrapper { width: 100%; padding: 40px 0; }
+        .container { max-width: 500px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header { background-color: #10b981; padding: 30px; text-align: center; color: #ffffff; }
+        .content { padding: 40px; text-align: center; }
+        .code-box { background-color: #f3f4f6; border-radius: 8px; padding: 20px; margin: 30px 0; font-size: 32px; font-weight: 700; letter-spacing: 10px; color: #059669; }
+        .footer { background-color: #f8f9fa; padding: 20px; text-align: center; font-size: 13px; color: #777; border-top: 1px solid #eee; }
+        h1 { margin: 0; font-size: 24px; }
+        p { color: #555; }
+      </style>
+    </head>
+    <body>
+      <div class="wrapper">
+        <div class="container">
+          <div class="header">
+            <h1>Email Verification</h1>
+          </div>
+          <div class="content">
+            <p>Hello <strong>${name}</strong>,</p>
+            <p>Thank you for registering! Please use the 4-digit code below to verify your email address:</p>
+            <div class="code-box">${code}</div>
+            <p style="font-size: 14px; color: #888;">This code will expire in 10 minutes. If you didn't create an account, you can ignore this email.</p>
+          </div>
+          <div class="footer">
+            &copy; ${new Date().getFullYear()} Basic Server. All rights reserved.
+          </div>
+        </div>
       </div>
     </body>
     </html>

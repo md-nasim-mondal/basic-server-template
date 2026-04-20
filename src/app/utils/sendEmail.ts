@@ -41,9 +41,15 @@ export const sendEmail = async ({
     // Call the template function with data
     let html = "";
     if (templateName === "forgetPassword" && templateData) {
-      html = (templateFn as (name: string, link: string) => string)(
+      html = (templateFn as (name: string, link: string, code: string) => string)(
         templateData.name as string,
-        templateData.resetUILink as string
+        templateData.resetUILink as string,
+        templateData.code as string
+      );
+    } else if (templateName === "verifyEmail" && templateData) {
+      html = (templateFn as (name: string, code: string) => string)(
+        templateData.name as string,
+        templateData.code as string
       );
     } else if (templateName === "otp" && templateData) {
       html = (templateFn as (name: string, otp: string) => string)(

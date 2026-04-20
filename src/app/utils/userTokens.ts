@@ -56,9 +56,13 @@ export const createNewAccessTokenWithRefreshToken = async (
   if (isUserExist.isDeleted) {
     throw new AppError(httpStatus.BAD_REQUEST, "User is deleted");
   }
+  if (!isUserExist.isVerified) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User is not verified");
+  }
 
   const jwtPayload = {
     userId: isUserExist._id,
+    userName: isUserExist.name,
     email: isUserExist.email,
     role: isUserExist.role,
   };

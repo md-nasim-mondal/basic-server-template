@@ -39,7 +39,7 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateUser = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.params.id;
+  const userId = req.params.id as string;
   const verifiedToken = req.user;
   const payload = req.body;
 
@@ -85,7 +85,7 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getSingleUser = catchAsync(async (req: Request, res: Response) => {
-  const id = req.params.id;
+  const id = req.params.id as string;
   const result = await UserServices.getSingleUser(id);
 
   sendResponse(res, {
@@ -96,12 +96,25 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const verifyEmail = catchAsync(async (req: Request, res: Response) => {
+  const { email, code } = req.body;
+  const result = await UserServices.verifyEmail(email, code);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Email Verified Successfully",
+    data: result,
+  });
+});
+
 export const UserControllers = {
   createUser,
   getAllUsers,
   getMe,
   updateUser,
   getSingleUser,
+  verifyEmail,
 };
 
 // route matching -> controller -> service -> model -> DB

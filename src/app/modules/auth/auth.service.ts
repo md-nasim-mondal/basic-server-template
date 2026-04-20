@@ -5,6 +5,7 @@ import { envVars } from "../../config/env";
 import AppError from "../../errorHelpers/AppError";
 import { sendEmail } from "../../utils/sendEmail";
 import { createNewAccessTokenWithRefreshToken, createUserTokens } from "../../utils/userTokens";
+import { ms } from "../../utils/ms";
 import { IsActive, IUser } from "../user/user.interface";
 import { User } from "../user/user.model";
 
@@ -100,10 +101,24 @@ const resetPassword = async (
     throw new AppError(httpStatus.NOT_FOUND, "User doesn't exist!");
   }
 
+  if (payload.code !== isUserExist.passwordResetCode) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invalid reset code");
+  }
+
+  if (
+    isUserExist.passwordResetCodeExpires &&
+    new Date() > isUserExist.passwordResetCodeExpires
+  ) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Reset code expired");
+  }
+
   isUserExist.password = await bcryptjs.hash(
     payload.newPassword as string,
     Number(envVars.BCRYPT_SALT_ROUND)
   );
+
+  isUserExist.passwordResetCode = undefined;
+  isUserExist.passwordResetCodeExpires = undefined;
 
   await isUserExist.save();
 };
@@ -147,8 +162,17 @@ const forgotPassword = async (email: string) => {
   };
 
   const resetToken = jwt.sign(jwtPayload, envVars.JWT_ACCESS_SECRET, {
-    expiresIn: "10m",
+    expiresIn: envVars.RESET_PASS_EXPIRES as jwt.SignOptions["expiresIn"],
   });
+
+  const passwordResetCode = Math.floor(1000 + Math.random() * 9000).toString();
+  const passwordResetCodeExpires = new Date(
+    Date.now() + ms(envVars.RESET_PASS_EXPIRES)
+  );
+
+  isUserExist.passwordResetCode = passwordResetCode;
+  isUserExist.passwordResetCodeExpires = passwordResetCodeExpires;
+  await isUserExist.save();
 
   const resetUILink = `${envVars.FRONTEND_URL}/reset-password?id=${isUserExist._id}&token=${resetToken}`;
 
@@ -159,6 +183,7 @@ const forgotPassword = async (email: string) => {
     templateData: {
       name: isUserExist.name,
       resetUILink,
+      code: passwordResetCode,
     },
   });
 };

@@ -37,6 +37,10 @@ export interface IUser {
   isVerified: boolean;
   role: Role;
   auths: IAuthProvider[];
+  verificationCode?: string;
+  verificationCodeExpires?: Date;
+  passwordResetCode?: string;
+  passwordResetCodeExpires?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
